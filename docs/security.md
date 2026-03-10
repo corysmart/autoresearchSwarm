@@ -16,11 +16,13 @@ This harness assumes peers can be malicious. Public peering is built so remote d
 | Boundary | Trust level | Notes |
 | --- | --- | --- |
 | Upstream core in repo root | Trusted local contract | Used as immutable source for workspaces |
+| Platform overlays in `platform_cores/` | Trusted local contract | Additive local variants, selected by platform policy |
 | Worker | Trusted local process with limited responsibility | Can execute local experiments only |
 | Local API | Trusted policy authority | Signs local records, stores trust state, exposes local-only control surface |
 | Remote peers in `peered` mode | Untrusted | Can only provide signed metadata |
 | Remote peers in `private-peered` mode | Trust-scoped | Can provide authenticated lineage that may later execute locally |
 | Dashboard | Read-only local client | Can request local moderation actions through explicit API endpoints |
+| Local mutation backends (`codex`, `ernest-agent`) | Trusted local tooling boundary | May mutate worktree-local `train.py`, but are never selected or prompted by peers |
 
 ## Allowed Peer Data
 
@@ -50,6 +52,20 @@ Private swarms still forbid:
 - arbitrary job definitions
 - unauthenticated code or artifact downloads
 - checkpoint downloads outside the configured private policy
+
+## Local Agent Backends
+
+Mutation generation is local-only and has its own safety boundary:
+
+- `heuristic` mutates `train.py` deterministically inside the worker
+- `codex` runs the local Codex CLI against the disposable workspace only
+- `ernest-agent` sends a local mutation request to Ernest-Agent, scoped to `worktrees/`
+
+Important rule:
+
+- peer data may influence which parent experiment is chosen in private mode
+- peer data does not choose the local mutation backend
+- peer data does not become an executable prompt or shell instruction
 
 ## Admission Controls
 
@@ -131,4 +147,6 @@ When a node is locally disabled:
 - Use `private-peered` only with operators whose code lineage you are willing to inherit.
 - Keep the API bound to localhost unless you explicitly need otherwise.
 - Use `HARNESS_EXECUTION_MODE=simulated` for development and CI.
+- On Apple Silicon, prefer `HARNESS_PLATFORM_CORE=auto` or `macos` so the MPS overlay is selected.
+- Use `HARNESS_AGENT_BACKEND=heuristic` if you want a fully dependency-free local worker path.
 - Review the Observability and Trust pages regularly if peering is enabled.

@@ -55,7 +55,9 @@ test("UI API helpers map successful JSON responses", async () => {
           api: "healthy",
           workerPollSeconds: 1,
           runtimeMode: "private-peered",
-          peerCount: 0
+          peerCount: 0,
+          agentBackend: "auto",
+          platformCore: "default"
         },
         "/api/local/trust/report": { ok: true },
         "/api/local/peering/private": { ok: true }

@@ -1,5 +1,20 @@
 # API
 
+## Config Loading
+
+Runtime config precedence is:
+
+1. shell environment
+2. `.env.local`
+3. `.env.local.default`
+
+Behavior:
+
+- the loader reads `.env.local.default` first, then `.env.local`
+- shell-provided values are never overwritten
+- `.env.local.default` is committed repo policy/defaults
+- `.env.local` is gitignored for local overrides
+
 ## Public Local Endpoints
 
 ### `GET /health`
@@ -47,7 +62,14 @@ Returns recent worker runs.
 
 ### `GET /api/observability/health`
 
-Returns process-level health summary for the observability page.
+Returns process-level health summary for the observability page, including:
+
+- API health
+- worker poll interval
+- runtime mode
+- known peer count
+- configured agent backend
+- configured platform core
 
 ### `GET /api/events`
 
@@ -98,7 +120,7 @@ Submits a local authoritative report or rating:
 
 ## Internal Worker Endpoints
 
-### `GET /api/local/scheduler/next?execution_mode=real|simulated|blocked`
+### `GET /api/local/scheduler/next?execution_mode=real|simulated|blocked&platform_core=default|macos`
 
 Returns the best eligible parent experiment and local node metadata for the worker.
 
@@ -108,6 +130,10 @@ Selection policy:
 - `peered`: local verified parents only
 - `private-peered`: local verified parents plus remote authenticated parents that include `train_source` and a checkpoint manifest
 - `libp2p-experimental`: same policy as private mode, but over the unsupported experimental transport
+
+Additional scheduler rule:
+
+- the selected parent must match the worker's requested `platform_core`
 
 ### `POST /api/internal/worker/run-start`
 
@@ -128,6 +154,8 @@ The worker sends:
 - diff
 - mutation summary
 - checkpoint hash/size when a checkpoint artifact was produced
+
+The worker also normalizes `metrics.platform_core` before hashing and storage so experiment lineage remains platform-aware.
 
 ## Internal Peer Endpoint
 

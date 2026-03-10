@@ -152,18 +152,25 @@ export function createApiServer(state: ApiState): Server {
           api: "healthy",
           workerPollSeconds: state.config.workerPollSeconds,
           runtimeMode: state.swarm.runtimeMode(),
-          peerCount: state.db.listPeers().length
+          peerCount: state.db.listPeers().length,
+          agentBackend: state.config.agentBackend,
+          platformCore: state.config.platformCore
         });
         return;
       }
 
       if (request.method === "GET" && matchPath(url, "/api/local/scheduler/next")) {
         const executionMode = url.searchParams.get("execution_mode");
+        const platformCore = url.searchParams.get("platform_core");
         sendJson(response, 200, {
           parent:
             executionMode === "real" || executionMode === "simulated" || executionMode === "blocked"
-              ? state.db.schedulerParent(state.swarm.runtimeMode(), executionMode)
-              : state.db.schedulerParent(state.swarm.runtimeMode(), "simulated"),
+              ? state.db.schedulerParent(
+                  state.swarm.runtimeMode(),
+                  executionMode,
+                  platformCore === "macos" ? "macos" : "default"
+                )
+              : state.db.schedulerParent(state.swarm.runtimeMode(), "simulated", "default"),
           nodeId: state.identity.nodeId,
           worktreeDir: state.config.worktreeDir
         });

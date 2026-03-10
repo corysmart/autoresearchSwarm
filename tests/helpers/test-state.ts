@@ -36,6 +36,12 @@ export function createTestHarness(overrides: Partial<HarnessConfig> = {}): TestH
     reputationDisableThreshold: -5,
     reputationReportDisableCount: 3,
     workerPollSeconds: 1,
+    agentBackend: "heuristic",
+    platformCore: "default",
+    ernestAgentUrl: "http://127.0.0.1:4310",
+    ernestAgentRoot: join(rootDir, "ernest-agent"),
+    ernestAgentAutoStart: false,
+    ernestAgentPort: 4310,
     ...overrides
   };
 

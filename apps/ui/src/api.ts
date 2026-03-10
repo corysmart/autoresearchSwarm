@@ -72,12 +72,26 @@ export async function fetchTrust(): Promise<{ items: TrustRecord[]; reports: unk
 export async function fetchObservability(): Promise<{
   events: AuditEventView[];
   runs: WorkerRunView[];
-  health: { api: string; workerPollSeconds: number; runtimeMode: string; peerCount: number };
+  health: {
+    api: string;
+    workerPollSeconds: number;
+    runtimeMode: string;
+    peerCount: number;
+    agentBackend: string;
+    platformCore: string;
+  };
 }> {
   const [events, runs, health] = await Promise.all([
     getJson<{ items: AuditEventView[] }>("/api/observability/events"),
     getJson<{ items: WorkerRunView[] }>("/api/observability/runs"),
-    getJson<{ api: string; workerPollSeconds: number; runtimeMode: string; peerCount: number }>("/api/observability/health")
+    getJson<{
+      api: string;
+      workerPollSeconds: number;
+      runtimeMode: string;
+      peerCount: number;
+      agentBackend: string;
+      platformCore: string;
+    }>("/api/observability/health")
   ]);
   return { events: events.items, runs: runs.items, health };
 }

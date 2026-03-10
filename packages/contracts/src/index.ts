@@ -11,6 +11,7 @@ export type SwarmTopic = (typeof SWARM_TOPICS)[keyof typeof SWARM_TOPICS];
 
 export type RuntimeMode = "local-only" | "peered" | "private-peered" | "libp2p-experimental";
 export type ExecutionMode = "real" | "simulated" | "blocked";
+export type PlatformCore = "default" | "macos";
 export type ExperimentOrigin = "local_verified" | "remote_authenticated" | "quarantined";
 export type ExperimentStatus = "pending" | "running" | "completed" | "failed" | "blocked";
 export type TrustSource = "local" | "remote-advisory";
@@ -29,6 +30,7 @@ export interface ExperimentMetrics {
   training_seconds: number | null;
   total_seconds: number | null;
   execution_mode: ExecutionMode;
+  platform_core?: PlatformCore;
   notes?: string;
 }
 
@@ -191,12 +193,14 @@ function isMetrics(value: unknown): value is ExperimentMetrics {
     return false;
   }
   const executionMode = value.execution_mode;
+  const platformCore = value.platform_core;
   return (
     (value.val_bpb === null || typeof value.val_bpb === "number") &&
     (value.peak_vram_mb === null || typeof value.peak_vram_mb === "number") &&
     (value.training_seconds === null || typeof value.training_seconds === "number") &&
     (value.total_seconds === null || typeof value.total_seconds === "number") &&
     (executionMode === "real" || executionMode === "simulated" || executionMode === "blocked") &&
+    (platformCore === undefined || platformCore === "default" || platformCore === "macos") &&
     (value.notes === undefined || typeof value.notes === "string")
   );
 }

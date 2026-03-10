@@ -15,6 +15,12 @@ The harness is the default entrypoint for local node operation. The upstream cor
 npm install
 ```
 
+Local configuration is layered:
+
+- committed repo defaults live in `.env.local.default`
+- machine-specific overrides belong in `.env.local`
+- explicit shell exports still override both
+
 If you want to use the original core directly, keep the upstream Python workflow available:
 
 ```bash
@@ -36,6 +42,8 @@ This starts:
 - worker: local experiment loop
 - peer sync: `private-peered` by default
 - checkpoint inheritance: enabled only for trusted private swarms
+- platform core: `auto` (`macos` on Apple Silicon, `default` elsewhere)
+- agent backend: `auto` (Ernest-Agent if configured, then Codex CLI if available, then heuristic fallback)
 
 ## Runtime Modes
 
@@ -139,6 +147,57 @@ HARNESS_EXECUTION_MODE=simulated npm run start
 HARNESS_EXECUTION_MODE=real npm run start
 ```
 
+## Platform Core Selection
+
+The harness chooses the trainer core separately from execution mode:
+
+- `HARNESS_PLATFORM_CORE=auto` picks `macos` on Apple Silicon and `default` everywhere else
+- `HARNESS_PLATFORM_CORE=default` forces the root upstream CUDA-oriented core
+- `HARNESS_PLATFORM_CORE=macos` forces the Apple Silicon / MPS overlay under `platform_cores/macos/`
+
+Examples:
+
+```bash
+HARNESS_PLATFORM_CORE=macos npm run start
+HARNESS_PLATFORM_CORE=default HARNESS_EXECUTION_MODE=simulated npm run start
+```
+
+The macOS overlay is derived from `miolini/autoresearch-macos` and is kept additive so the root upstream core remains syncable.
+
+## Agent Backend Selection
+
+The worker mutation step can be driven by a local agent backend:
+
+- `HARNESS_AGENT_BACKEND=auto`
+- `HARNESS_AGENT_BACKEND=heuristic`
+- `HARNESS_AGENT_BACKEND=codex`
+- `HARNESS_AGENT_BACKEND=ernest-agent`
+
+`auto` behavior:
+
+- prefer Ernest-Agent when `HARNESS_ERNEST_AGENT_URL` is configured
+- otherwise prefer the local `codex` CLI when installed
+- otherwise fall back to the built-in heuristic mutator
+
+Direct Codex example:
+
+```bash
+HARNESS_AGENT_BACKEND=codex npm run start
+```
+
+Ernest-Agent example:
+
+```bash
+npm run start
+```
+
+That works out of the box in this repo because `.env.local.default` already sets:
+
+- `HARNESS_AGENT_BACKEND=ernest-agent`
+- `HARNESS_ERNEST_AGENT_ROOT=../Ernest Agent`
+
+The orchestrator auto-starts Ernest-Agent on a local port, scopes its file workspace root to `worktrees/`, and the worker sends mutation requests over `POST /agent/run-once`.
+
 ## Useful Endpoints
 
 - `GET /health`
@@ -189,6 +248,7 @@ That setup proves:
 - remote experiments appearing on both dashboards
 - remote checkpoint manifests propagating
 - scheduler eligibility for private authenticated parents
+- platform-core-aware parent selection when mixed Linux/macOS nodes are present
 
 ## Test And Validation Commands
 

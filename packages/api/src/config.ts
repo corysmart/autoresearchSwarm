@@ -2,6 +2,7 @@ import { mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 
 import type { RuntimeMode } from "../../contracts/src/index.ts";
+import { loadLocalEnv } from "./local-env.ts";
 
 export interface HarnessConfig {
   rootDir: string;
@@ -23,6 +24,12 @@ export interface HarnessConfig {
   reputationDisableThreshold: number;
   reputationReportDisableCount: number;
   workerPollSeconds: number;
+  agentBackend: "auto" | "heuristic" | "codex" | "ernest-agent";
+  platformCore: "auto" | "default" | "macos";
+  ernestAgentUrl: string | null;
+  ernestAgentRoot: string;
+  ernestAgentAutoStart: boolean;
+  ernestAgentPort: number;
 }
 
 function parseNumber(value: string | undefined, fallback: number): number {
@@ -31,6 +38,7 @@ function parseNumber(value: string | undefined, fallback: number): number {
 }
 
 export function loadHarnessConfig(rootDir: string = process.cwd()): HarnessConfig {
+  loadLocalEnv(rootDir);
   const dataDir = resolve(rootDir, process.env.HARNESS_DATA_DIR ?? "harness-data");
   const worktreeDir = resolve(rootDir, process.env.HARNESS_WORKTREE_DIR ?? "worktrees");
 
@@ -39,6 +47,21 @@ export function loadHarnessConfig(rootDir: string = process.cwd()): HarnessConfi
 
   const apiHost = process.env.HARNESS_API_HOST ?? "127.0.0.1";
   const apiPort = parseNumber(process.env.HARNESS_API_PORT, 4172);
+  const ernestAgentPort = parseNumber(process.env.HARNESS_ERNEST_AGENT_PORT, 4310);
+  const agentBackend =
+    process.env.HARNESS_AGENT_BACKEND === "heuristic"
+      ? "heuristic"
+      : process.env.HARNESS_AGENT_BACKEND === "codex"
+        ? "codex"
+        : process.env.HARNESS_AGENT_BACKEND === "ernest-agent"
+          ? "ernest-agent"
+          : "auto";
+  const platformCore =
+    process.env.HARNESS_PLATFORM_CORE === "default"
+      ? "default"
+      : process.env.HARNESS_PLATFORM_CORE === "macos"
+        ? "macos"
+        : "auto";
 
   return {
     rootDir,
@@ -75,6 +98,14 @@ export function loadHarnessConfig(rootDir: string = process.cwd()): HarnessConfi
     securityDisableThreshold: parseNumber(process.env.HARNESS_SECURITY_DISABLE_THRESHOLD, 5),
     reputationDisableThreshold: parseNumber(process.env.HARNESS_REPUTATION_DISABLE_THRESHOLD, -5),
     reputationReportDisableCount: parseNumber(process.env.HARNESS_REPUTATION_REPORT_DISABLE_COUNT, 5),
-    workerPollSeconds: parseNumber(process.env.HARNESS_WORKER_POLL_SECONDS, 10)
+    workerPollSeconds: parseNumber(process.env.HARNESS_WORKER_POLL_SECONDS, 10),
+    agentBackend,
+    platformCore,
+    ernestAgentUrl: process.env.HARNESS_ERNEST_AGENT_URL ?? `http://${apiHost}:${ernestAgentPort}`,
+    ernestAgentRoot: resolve(rootDir, process.env.HARNESS_ERNEST_AGENT_ROOT ?? "../Ernest Agent"),
+    ernestAgentAutoStart:
+      process.env.HARNESS_ERNEST_AGENT_AUTO_START === "1" ||
+      (process.env.HARNESS_ERNEST_AGENT_AUTO_START !== "0" && agentBackend === "ernest-agent"),
+    ernestAgentPort,
   };
 }

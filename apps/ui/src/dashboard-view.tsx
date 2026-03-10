@@ -22,7 +22,14 @@ export interface DashboardState {
   reports: unknown[];
   auditEvents: AuditEventView[];
   workerRuns: WorkerRunView[];
-  health: { api: string; workerPollSeconds: number; runtimeMode: string; peerCount: number } | null;
+  health: {
+    api: string;
+    workerPollSeconds: number;
+    runtimeMode: string;
+    peerCount: number;
+    agentBackend: string;
+    platformCore: string;
+  } | null;
 }
 
 interface NetworkAction {
@@ -327,6 +334,8 @@ export function DashboardView({
                 <div><dt>API</dt><dd>{state.health?.api ?? "unknown"}</dd></div>
                 <div><dt>Worker poll</dt><dd>{state.health?.workerPollSeconds ?? "?"}s</dd></div>
                 <div><dt>Mode</dt><dd>{state.health?.runtimeMode ?? "private-peered"}</dd></div>
+                <div><dt>Agent backend</dt><dd>{state.health?.agentBackend ?? "auto"}</dd></div>
+                <div><dt>Platform core</dt><dd>{state.health?.platformCore ?? "auto"}</dd></div>
                 <div><dt>Known peers</dt><dd>{state.health?.peerCount ?? 0}</dd></div>
               </dl>
             </Panel>

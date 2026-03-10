@@ -11,6 +11,14 @@ The upstream core lives at the repo root and should remain the contract surface:
 - `program.md`
 - supporting root metadata like `pyproject.toml`
 
+Platform-specific variants stay outside that contract surface under additive overlays:
+
+- `platform_cores/macos/prepare.py`
+- `platform_cores/macos/train.py`
+- `platform_cores/macos/pyproject.toml`
+
+The current macOS overlay is based on `miolini/autoresearch-macos` and should be updated independently of the root upstream sync flow.
+
 ## Expected Workflow
 
 1. Add the original repo as `upstream`.
@@ -25,6 +33,7 @@ npm run build
 ```
 
 5. Update only the harness adapters if the upstream contract changed.
+6. If the macOS overlay depends on upstream trainer changes, port those changes into `platform_cores/macos/` separately.
 
 ## Why The Worker Uses Disposable Workspaces
 
@@ -48,3 +57,10 @@ The harness also relies on the minimal checkpoint hooks in `train.py`:
 - `AUTORESEARCH_SAVE_CHECKPOINT`
 
 If those disappear or move significantly, update the worker adapter and the compatibility checker together.
+
+For Apple Silicon support, also watch for drift between:
+
+- root `prepare.py` / `train.py`
+- `platform_cores/macos/prepare.py` / `train.py`
+
+The overlay should stay close to the upstream core plus the minimum macOS-specific deltas.

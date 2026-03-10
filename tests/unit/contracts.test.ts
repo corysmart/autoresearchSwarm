@@ -48,3 +48,26 @@ test("buildExperimentHash changes when checkpoint lineage changes", () => {
     buildExperimentHash({ ...baseInput, checkpoint_hash: "b".repeat(64) })
   );
 });
+
+test("buildExperimentHash changes when platform core changes", () => {
+  const baseInput = {
+    parent_hash: null,
+    diff: "",
+    metrics: {
+      val_bpb: 0.99,
+      peak_vram_mb: 12,
+      training_seconds: 300,
+      total_seconds: 320,
+      execution_mode: "simulated" as const,
+      platform_core: "default" as const
+    },
+    model_hash: "abc",
+    mutation_summary: "baseline",
+    timestamp: "2026-03-10T00:00:00Z",
+    node_id: "node-1"
+  };
+  assert.notEqual(
+    buildExperimentHash(baseInput),
+    buildExperimentHash({ ...baseInput, metrics: { ...baseInput.metrics, platform_core: "macos" } })
+  );
+});

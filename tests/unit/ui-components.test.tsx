@@ -110,7 +110,14 @@ test("DashboardView renders non-stats panels when selected", () => {
         reports: [],
         auditEvents: [{ id: 1, timestamp: "2026-03-10T00:00:00Z", source: "api", severity: "info", event_type: "startup", message: "ready", detail_json: null }],
         workerRuns: [{ run_id: "run-1", experiment_hash: null, status: "completed", started_at: "2026-03-10T00:00:00Z", finished_at: null, summary: "ok" }],
-        health: { api: "healthy", workerPollSeconds: 1, runtimeMode: "private-peered", peerCount: 0 }
+        health: {
+          api: "healthy",
+          workerPollSeconds: 1,
+          runtimeMode: "private-peered",
+          peerCount: 0,
+          agentBackend: "auto",
+          platformCore: "default"
+        }
       }}
       disabledCount={0}
       networkBusyMode={null}
@@ -174,7 +181,14 @@ test("DashboardView renders leaderboard, discoveries, and trust branches", () =>
     reports: [],
     auditEvents: [],
     workerRuns: [],
-    health: { api: "healthy", workerPollSeconds: 1, runtimeMode: "private-peered", peerCount: 0 }
+    health: {
+      api: "healthy",
+      workerPollSeconds: 1,
+      runtimeMode: "private-peered",
+      peerCount: 0,
+      agentBackend: "auto",
+      platformCore: "default"
+    }
   };
 
   const leaderboardHtml = renderToStaticMarkup(

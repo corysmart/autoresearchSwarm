@@ -130,6 +130,41 @@ test("private scheduler can inherit from remote authenticated checkpoints", () =
   harness.cleanup();
 });
 
+test("scheduler ignores parents from an incompatible platform core", () => {
+  const harness = createTestHarness();
+  harness.state.db.saveExperiment({
+    experiment_hash: "mac-remote",
+    parent_hash: null,
+    metrics: {
+      val_bpb: 0.39,
+      peak_vram_mb: 0,
+      training_seconds: 2,
+      total_seconds: 2,
+      execution_mode: "real",
+      platform_core: "macos"
+    },
+    model_hash: "mac-model",
+    train_source: 'WINDOW_PATTERN = "L"\n',
+    timestamp: "2026-03-10T00:00:00Z",
+    node_id: "remote-node",
+    signature: "sig",
+    status: "completed",
+    mutation_summary: "mac-parent",
+    diff: "",
+    checkpoint: {
+      checkpoint_hash: "f".repeat(64),
+      checkpoint_size_bytes: 256,
+      checkpoint_url: "http://remote/api/artifacts/checkpoints/" + "f".repeat(64),
+      produced_by_node_id: "remote-node"
+    },
+    origin: "remote_authenticated"
+  });
+
+  assert.equal(harness.state.db.schedulerParent("private-peered", "real", "default"), null);
+  assert.equal(harness.state.db.schedulerParent("private-peered", "real", "macos")?.experiment_hash, "mac-remote");
+  harness.cleanup();
+});
+
 test("checkpoint artifact policy is private-only unless networking is local", () => {
   const privateHarness = createTestHarness({ runtimeMode: "private-peered", privateNetworkToken: "secret-token" });
   const privateRequest = { headers: { "x-swarm-private-token": "secret-token" } } as IncomingMessage;

@@ -1,6 +1,11 @@
 import { randomUUID } from "node:crypto";
 
-import { buildExperimentHash, type ExperimentMetrics, type ExperimentStatus, type ReputationReport } from "../../contracts/src/index.ts";
+import {
+  buildExperimentHash,
+  type ExperimentMetrics,
+  type ExperimentStatus,
+  type ReputationReport
+} from "../../contracts/src/index.ts";
 import type { ApiState } from "./state.ts";
 
 export interface LocalExperimentInput {
@@ -18,8 +23,16 @@ export interface LocalExperimentInput {
   } | null;
 }
 
+function normalizeMetrics(metrics: ExperimentMetrics): ExperimentMetrics {
+  return {
+    ...metrics,
+    platform_core: metrics.platform_core ?? "default"
+  };
+}
+
 export function ingestLocalExperiment(state: ApiState, body: LocalExperimentInput) {
   const timestamp = body.timestamp || new Date().toISOString();
+  const metrics = normalizeMetrics(body.metrics);
   const checkpoint = body.checkpoint
     ? {
         checkpoint_hash: body.checkpoint.checkpoint_hash,
@@ -31,7 +44,7 @@ export function ingestLocalExperiment(state: ApiState, body: LocalExperimentInpu
   const experiment_hash = buildExperimentHash({
     parent_hash: body.parent_hash,
     diff: body.diff,
-    metrics: body.metrics,
+    metrics,
     model_hash: body.model_hash,
     checkpoint_hash: checkpoint?.checkpoint_hash ?? null,
     mutation_summary: body.mutation_summary,
@@ -42,7 +55,7 @@ export function ingestLocalExperiment(state: ApiState, body: LocalExperimentInpu
   const record = {
     experiment_hash,
     parent_hash: body.parent_hash,
-    metrics: body.metrics,
+    metrics,
     model_hash: body.model_hash,
     train_source: body.train_source,
     timestamp,

@@ -30,7 +30,9 @@ This project addresses those gaps without rewriting the upstream trainer into a 
 The harness is additive:
 
 - the upstream core remains at the repo root and is treated as the immutable contract
+- a platform-core overlay selects the default CUDA trainer or the Apple Silicon trainer automatically
 - a Python worker snapshots that core into disposable workspaces for each experiment
+- the worker mutation step is pluggable: heuristic fallback, direct Codex CLI, or Ernest-Agent
 - a local TypeScript API owns persistence, trust policy, and signed peer metadata handling
 - a React dashboard presents stats, graph state, moderation, and observability
 - private peering is the default runtime posture and is the only mode that supports real swarm inheritance
@@ -46,7 +48,7 @@ Each local node follows this flow:
 1. The orchestrator starts the API, worker, and dashboard.
 2. The worker asks the API for the best eligible parent for its execution mode.
 3. In `private-peered` mode that parent may be remote if it includes authenticated `train.py` lineage plus a checkpoint manifest.
-4. The worker snapshots the immutable core into a disposable workspace, applies the inherited `train.py` source, and mutates it locally.
+4. The worker snapshots the immutable core into a disposable workspace, selects the platform core (`default` or `macos`), applies the inherited `train.py` source, and mutates it locally.
 5. The worker restores a parent checkpoint when one is available, then runs a real experiment when the environment is ready, otherwise a clearly labeled simulated run.
 6. Each completed run produces a local checkpoint artifact and structured metadata.
 7. The worker posts results back to the API, which hashes, signs, stores, and projects the experiment into leaderboard, graph, discovery, trust, and observability views.
@@ -86,11 +88,33 @@ This repo is designed to keep pulling updates from the original autoresearch pro
 Key harness rules:
 
 - keep the upstream core files at the root
+- keep platform-specific trainer variants in additive overlays under `platform_cores/`
 - avoid refactoring the upstream training code into the harness packages
 - interact with the core via workspace snapshots, subprocesses, and file contracts
 - isolate all swarm/API/UI/security logic in additive directories
 
 That makes upstream syncs a maintenance workflow, not a rewrite project. See [docs/upstream-sync.md](docs/upstream-sync.md).
+
+## Platform Core And Agent Backends
+
+The worker has two local selection layers:
+
+- `HARNESS_PLATFORM_CORE=auto|default|macos`
+- `HARNESS_AGENT_BACKEND=auto|heuristic|codex|ernest-agent`
+
+Platform core:
+
+- `auto` chooses `macos` on Apple Silicon and `default` everywhere else
+- `platform_cores/macos/` is derived from the `miolini/autoresearch-macos` fork and keeps the Apple Silicon / MPS trainer separate from the root upstream core
+
+Agent backend:
+
+- `auto` prefers Ernest-Agent when configured, then Codex CLI when available, then the built-in heuristic mutator
+- `codex` uses the local Codex CLI directly against the disposable workspace
+- `ernest-agent` sends the mutation task to a local Ernest-Agent server and keeps the workspace boundary scoped to `worktrees/`
+- `heuristic` keeps the original deterministic mutation loop as a dependency-free fallback
+
+These are local-only mutation backends. Peer data never decides which prompt, command, or agent backend runs.
 
 ## Security Philosophy
 
@@ -172,7 +196,11 @@ Python worker unit tests are included in the default test run. The UI control su
 # 1. install node dependencies for the harness
 npm install
 
-# 2. start the full local stack
+# 2. optional: review or override local defaults
+#    committed defaults live in .env.local.default
+#    machine-specific overrides belong in .env.local
+
+# 3. start the full local stack
 npm run start
 ```
 
@@ -191,6 +219,45 @@ For a private swarm, set a shared token before starting:
 export SWARM_PRIVATE_NETWORK_TOKEN="replace-me"
 npm run start
 ```
+
+To force the Apple Silicon core or a specific mutation backend:
+
+```bash
+export HARNESS_PLATFORM_CORE=macos
+export HARNESS_AGENT_BACKEND=codex
+npm run start
+```
+
+To run node mutations through Ernest-Agent instead of the built-in worker mutator:
+
+```bash
+export HARNESS_AGENT_BACKEND=ernest-agent
+export HARNESS_ERNEST_AGENT_ROOT="../Ernest Agent"
+npm run start
+```
+
+With that configuration the orchestrator auto-starts the local Ernest-Agent server, scopes it to `worktrees/`, and the Observability page reports the selected agent backend and platform core.
+
+## Local Env Defaults
+
+Config precedence is:
+
+1. shell environment
+2. `.env.local`
+3. `.env.local.default`
+
+Implementation detail:
+
+- the loader reads `.env.local.default` first, then `.env.local`
+- keys already present in the shell are never overwritten
+
+Practical meaning:
+
+- `.env.local.default` is committed and carries repo-level defaults
+- `.env.local` is gitignored and is for machine-specific overrides
+- shell exports still win when you need one-off runs
+
+The current repo default backend is Ernest-Agent via [.env.local.default](/Users/cory/Documents/autoresearchSwarm/.env.local.default), pointing at the sibling Ernest workspace by default.
 
 Experimental libp2p mode is available only when explicitly unlocked:
 

@@ -8,6 +8,7 @@ import type {
   ExperimentRecord,
   GraphResponse,
   LeaderboardEntry,
+  PlatformCore,
   ReputationReport,
   RuntimeMode,
   SignedEnvelope,
@@ -44,6 +45,7 @@ interface DbLeaderboardRow {
   mutation_summary: string;
   origin: "local_verified" | "remote_authenticated" | "quarantined";
   execution_mode: "real" | "simulated" | "blocked";
+  platform_core: "default" | "macos";
   checkpoint_hash: string | null;
 }
 
@@ -55,6 +57,7 @@ interface DbExperimentRow {
   status: string;
   origin: "local_verified" | "remote_authenticated" | "quarantined";
   execution_mode: "real" | "simulated" | "blocked";
+  platform_core: "default" | "macos";
   val_bpb: number | null;
   peak_vram_mb: number | null;
   training_seconds: number | null;
@@ -95,6 +98,7 @@ export class HarnessDatabase {
         status TEXT NOT NULL,
         origin TEXT NOT NULL,
         execution_mode TEXT NOT NULL,
+        platform_core TEXT NOT NULL DEFAULT 'default',
         val_bpb REAL,
         peak_vram_mb REAL,
         training_seconds REAL,
@@ -198,6 +202,7 @@ export class HarnessDatabase {
     this.ensureColumn("experiments", "checkpoint_size_bytes", "INTEGER");
     this.ensureColumn("experiments", "checkpoint_url", "TEXT");
     this.ensureColumn("experiments", "checkpoint_node_id", "TEXT");
+    this.ensureColumn("experiments", "platform_core", "TEXT NOT NULL DEFAULT 'default'");
   }
 
   private ensureColumn(table: string, column: string, definition: string): void {
@@ -216,7 +221,8 @@ export class HarnessDatabase {
         peak_vram_mb: row.peak_vram_mb,
         training_seconds: row.training_seconds,
         total_seconds: row.total_seconds,
-        execution_mode: row.execution_mode
+        execution_mode: row.execution_mode,
+        platform_core: row.platform_core ?? "default"
       },
       model_hash: row.model_hash,
       train_source: row.train_source,
@@ -384,10 +390,10 @@ export class HarnessDatabase {
     this.db
       .prepare(`
         INSERT OR REPLACE INTO experiments (
-          experiment_hash, parent_hash, node_id, timestamp, status, origin, execution_mode, val_bpb,
+          experiment_hash, parent_hash, node_id, timestamp, status, origin, execution_mode, platform_core, val_bpb,
           peak_vram_mb, training_seconds, total_seconds, mutation_summary, diff, model_hash, train_source,
           checkpoint_hash, checkpoint_size_bytes, checkpoint_url, checkpoint_node_id, signature
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `)
       .run(
         record.experiment_hash,
@@ -397,6 +403,7 @@ export class HarnessDatabase {
         record.status,
         record.origin,
         record.metrics.execution_mode,
+        record.metrics.platform_core ?? "default",
         record.metrics.val_bpb,
         record.metrics.peak_vram_mb,
         record.metrics.training_seconds,
@@ -418,6 +425,7 @@ export class HarnessDatabase {
       .prepare(`
         SELECT experiments.experiment_hash, experiments.parent_hash, experiments.node_id, experiments.val_bpb,
                experiments.timestamp, experiments.mutation_summary, experiments.origin, experiments.execution_mode,
+               experiments.platform_core,
                experiments.checkpoint_hash,
                COALESCE(trust_state.disabled, 0) AS disabled
         FROM experiments
@@ -446,7 +454,7 @@ export class HarnessDatabase {
   listGraph(): GraphResponse {
     const rows = this.db
       .prepare(`
-        SELECT experiment_hash, parent_hash, val_bpb, node_id, origin, execution_mode, mutation_summary
+        SELECT experiment_hash, parent_hash, val_bpb, node_id, origin, execution_mode, platform_core, mutation_summary
         FROM experiments
         ORDER BY timestamp DESC
         LIMIT 200
@@ -458,6 +466,7 @@ export class HarnessDatabase {
       node_id: string;
       origin: "local_verified" | "remote_authenticated" | "quarantined";
       execution_mode: "real" | "simulated" | "blocked";
+      platform_core: "default" | "macos";
       mutation_summary: string;
     }>;
 
@@ -715,12 +724,16 @@ export class HarnessDatabase {
     return this.getTrustRecord(nodeId).disabled;
   }
 
-  schedulerParent(runtimeMode: RuntimeMode, executionMode: ExperimentRecord["metrics"]["execution_mode"]): ExperimentRecord | null {
+  schedulerParent(
+    runtimeMode: RuntimeMode,
+    executionMode: ExperimentRecord["metrics"]["execution_mode"],
+    platformCore: PlatformCore = "default"
+  ): ExperimentRecord | null {
     const allowRemoteInheritance = runtimeMode === "private-peered" || runtimeMode === "libp2p-experimental";
     const row = this.db
       .prepare(`
         SELECT experiments.experiment_hash, experiments.parent_hash, experiments.node_id, experiments.timestamp,
-               experiments.status, experiments.origin, experiments.execution_mode, experiments.val_bpb,
+               experiments.status, experiments.origin, experiments.execution_mode, experiments.platform_core, experiments.val_bpb,
                experiments.peak_vram_mb, experiments.training_seconds, experiments.total_seconds,
                experiments.mutation_summary, experiments.diff, experiments.model_hash, experiments.train_source,
                experiments.checkpoint_hash, experiments.checkpoint_size_bytes, experiments.checkpoint_url,
@@ -729,6 +742,7 @@ export class HarnessDatabase {
         LEFT JOIN trust_state ON trust_state.node_id = experiments.node_id
         WHERE experiments.status = 'completed'
           AND experiments.execution_mode = ?
+          AND COALESCE(experiments.platform_core, 'default') = ?
           AND COALESCE(trust_state.disabled, 0) = 0
           AND (
             experiments.origin = 'local_verified'
@@ -748,7 +762,7 @@ export class HarnessDatabase {
           experiments.timestamp DESC
         LIMIT 1
       `)
-      .get(executionMode, allowRemoteInheritance ? 1 : 0) as DbExperimentRow | undefined;
+      .get(executionMode, platformCore, allowRemoteInheritance ? 1 : 0) as DbExperimentRow | undefined;
 
     return row ? this.rowToExperiment(row) : null;
   }

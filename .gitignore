@@ -22,6 +22,7 @@ node_modules/
 coverage/
 apps/ui/dist/
 harness-data/
+.env.local
 *.tsbuildinfo
 
 # Results file

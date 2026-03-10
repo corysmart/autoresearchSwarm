@@ -1,4 +1,5 @@
 import { spawn, type ChildProcess } from "node:child_process";
+import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 
@@ -18,6 +19,9 @@ function spawnChild(command: string, args: string[], extraEnv: NodeJS.ProcessEnv
       HARNESS_UI_PORT: String(config.uiPort),
       HARNESS_API_BASE_URL: `http://${config.apiHost}:${config.apiPort}`,
       HARNESS_PUBLIC_BASE_URL: config.publicBaseUrl,
+      HARNESS_AGENT_BACKEND: config.agentBackend,
+      HARNESS_PLATFORM_CORE: config.platformCore,
+      HARNESS_ERNEST_AGENT_URL: config.ernestAgentUrl ?? "",
       ...extraEnv
     }
   });
@@ -41,6 +45,30 @@ async function waitFor(url: string, timeoutMs: number): Promise<void> {
 
 async function main(): Promise<void> {
   const processes: ChildProcess[] = [];
+  if (config.agentBackend === "ernest-agent" && config.ernestAgentAutoStart) {
+    const ernestServerEntry = resolve(config.ernestAgentRoot, "dist/server/server.js");
+    if (!existsSync(ernestServerEntry)) {
+      throw new Error(
+        `Ernest-Agent backend requested but ${ernestServerEntry} is missing. Build Ernest Agent first or set HARNESS_ERNEST_AGENT_AUTO_START=0.`
+      );
+    }
+    const ernest = spawn(process.execPath, [ernestServerEntry], {
+      cwd: config.ernestAgentRoot,
+      stdio: "inherit",
+      env: {
+        ...process.env,
+        PORT: String(config.ernestAgentPort),
+        OBS_UI_ENABLED: "false",
+        HEARTBEAT_ENABLED: "false",
+        FILE_WORKSPACE_ROOT: config.worktreeDir,
+        OPENCLAW_WORKSPACE_ROOT: config.worktreeDir,
+        CODEX_CWD: config.worktreeDir
+      }
+    });
+    processes.push(ernest);
+    await waitFor(`${config.ernestAgentUrl}/health`, 20_000);
+  }
+
   const api = spawnChild(process.execPath, ["--import", "tsx", "packages/api/src/main.ts"]);
   processes.push(api);
   await waitFor(`http://${config.apiHost}:${config.apiPort}/health`, 20_000);

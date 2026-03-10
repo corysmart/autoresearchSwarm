@@ -24,16 +24,18 @@ npm run check:docs
 | Integration | `tests/integration/` | API persistence, scheduler boundaries, checkpoint artifacts, internal contracts |
 | Security | `tests/security/` | invalid envelopes, disable thresholds, trust boundary behavior |
 | E2E | `tests/e2e/` | orchestrator startup, API/UI reachability, simulated local node flow |
-| Python unit | `tests/python/unit/` | worker mutation, diffing, inherited source handling, checkpoint promotion helpers |
+| Python unit | `tests/python/unit/` | worker mutation backends, diffing, inherited source handling, platform overlays, checkpoint promotion helpers |
 
 ## Coverage Expectations
 
 The harness is expected to keep all four layers covered:
 
 - worker logic
+- platform-core selection and incompatible-parent rejection
 - local API/service layer
 - swarm admission control
 - private-swarm inheritance path
+- local mutation backend behavior (`heuristic`, `codex`, `ernest-agent`)
 - dashboard rendering behavior
 
 The repo does not yet enforce a 90% whole-repo threshold.

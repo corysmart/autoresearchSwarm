@@ -1,91 +1,221 @@
-# autoresearch
+# Autoresearch Swarm Harness
 
-![teaser](progress.png)
+Autoresearch Swarm Harness is a security-first wrapper around the upstream `autoresearch` core. It keeps the original trainer entrypoints at the repo root, then layers local orchestration, a protected peer-sync surface, a local SQLite-backed API, a React dashboard, and an isolated worker loop around them.
 
-*One day, frontier AI research used to be done by meat computers in between eating, sleeping, having other fun, and synchronizing once in a while using sound wave interconnect in the ritual of "group meeting". That era is long gone. Research is now entirely the domain of autonomous swarms of AI agents running across compute cluster megastructures in the skies. The agents claim that we are now in the 10,205th generation of the code base, in any case no one could tell if that's right or wrong as the "code" is now a self-modifying binary that has grown beyond human comprehension. This repo is the story of how it all began. -@karpathy, March 2026*.
+## Mission
 
-The idea: give an AI agent a small but real LLM training setup and let it experiment autonomously overnight. It modifies the code, trains for 5 minutes, checks if the result improved, keeps or discards, and repeats. You wake up in the morning to a log of experiments and (hopefully) a better model. The training code here is a simplified single-GPU implementation of [nanochat](https://github.com/karpathy/nanochat). The core idea is that you're not touching any of the Python files like you normally would as a researcher. Instead, you are programming the `program.md` Markdown files that provide context to the AI agents and set up your autonomous research org. The default `program.md` in this repo is intentionally kept as a bare bones baseline, though it's obvious how one would iterate on it over time to find the "research org code" that achieves the fastest research progress, how you'd add more agents to the mix, etc. A bit more context on this project is here in this [tweet](https://x.com/karpathy/status/2029701092347630069).
+The goal is to turn each node into the same full-stack participant:
 
-## How it works
+- local experiment worker
+- optional swarm peer
+- local dashboard host
+- local trust authority
 
-The repo is deliberately kept small and only really has a three files that matter:
+Every node should be able to run autonomously, observe the swarm, and stay safe even when peers are malicious.
 
-- **`prepare.py`** — fixed constants, one-time data prep (downloads training data, trains a BPE tokenizer), and runtime utilities (dataloader, evaluation). Not modified.
-- **`train.py`** — the single file the agent edits. Contains the full GPT model, optimizer (Muon + AdamW), and training loop. Everything is fair game: architecture, hyperparameters, optimizer, batch size, etc. **This file is edited and iterated on by the agent**.
-- **`program.md`** — baseline instructions for one agent. Point your agent here and let it go. **This file is edited and iterated on by the human**.
+## The Problem This Project Addresses
 
-By design, training runs for a **fixed 5-minute time budget** (wall clock, excluding startup/compilation), regardless of the details of your compute. The metric is **val_bpb** (validation bits per byte) — lower is better, and vocab-size-independent so architectural changes are fairly compared.
+The upstream project is intentionally small and powerful, but it is optimized for a single local agent editing and running `train.py`. That leaves several engineering gaps if you want a secure swarm:
 
-If you are new to neural networks, this ["Dummy's Guide"](https://x.com/hooeem/status/2030720614752039185) looks pretty good for a lot more context.
+- no peer trust boundary
+- no local moderation surface
+- no durable experiment/state service
+- no observability dashboard
+- no harness layer for safe upstream syncing
 
-## Quick start
+This project addresses those gaps without rewriting the upstream trainer into a new architecture.
 
-**Requirements:** A single NVIDIA GPU (tested on H100), Python 3.10+, [uv](https://docs.astral.sh/uv/).
+## Technical Approach
+
+The harness is additive:
+
+- the upstream core remains at the repo root and is treated as the immutable contract
+- a Python worker snapshots that core into disposable workspaces for each experiment
+- a local TypeScript API owns persistence, trust policy, and signed peer metadata handling
+- a React dashboard presents stats, graph state, moderation, and observability
+- private peering is the default runtime posture and is the only mode that supports real swarm inheritance
+- public peering is opt-in and remains metadata-only
+- libp2p exists only as an experimental transport mode and is not recommended yet
+
+Remote data is never treated as executable authority in public mode. In private mode, authenticated peers can share full experiment lineage, so that mode should only be used with operators you trust.
+
+## How It Works
+
+Each local node follows this flow:
+
+1. The orchestrator starts the API, worker, and dashboard.
+2. The worker asks the API for the best eligible parent for its execution mode.
+3. In `private-peered` mode that parent may be remote if it includes authenticated `train.py` lineage plus a checkpoint manifest.
+4. The worker snapshots the immutable core into a disposable workspace, applies the inherited `train.py` source, and mutates it locally.
+5. The worker restores a parent checkpoint when one is available, then runs a real experiment when the environment is ready, otherwise a clearly labeled simulated run.
+6. Each completed run produces a local checkpoint artifact and structured metadata.
+7. The worker posts results back to the API, which hashes, signs, stores, and projects the experiment into leaderboard, graph, discovery, trust, and observability views.
+8. If peering is enabled, the API exchanges signed experiment envelopes with configured peers. Public mode strips executable lineage; private mode preserves it.
+
+## Architecture At A Glance
+
+```mermaid
+flowchart TB
+    subgraph Core["upstream core (immutable contract)"]
+        PREP["prepare.py"]
+        TRAIN["train.py"]
+        PROGRAM["program.md"]
+    end
+
+    subgraph Harness["additive harness"]
+        ORCH["orchestrator"]
+        WORKER["python worker"]
+        API["local API + SQLite"]
+        SWARM["signed peer sync"]
+        UI["React dashboard"]
+    end
+
+    ORCH --> WORKER
+    ORCH --> API
+    ORCH --> UI
+    WORKER -->|workspace snapshots + results| API
+    API --> SWARM
+    UI -->|read-only local API| API
+    WORKER -->|copies core into worktrees| Core
+```
+
+## Why This Is Built As A Harness
+
+This repo is designed to keep pulling updates from the original autoresearch project. That only works if the integration boundary stays narrow.
+
+Key harness rules:
+
+- keep the upstream core files at the root
+- avoid refactoring the upstream training code into the harness packages
+- interact with the core via workspace snapshots, subprocesses, and file contracts
+- isolate all swarm/API/UI/security logic in additive directories
+
+That makes upstream syncs a maintenance workflow, not a rewrite project. See [docs/upstream-sync.md](docs/upstream-sync.md).
+
+## Security Philosophy
+
+Security is the first design constraint, not a bolt-on:
+
+- first start defaults to `private-peered`
+- public peering is explicit opt-in
+- private peering is the recommended mode for now
+- public peering is signed metadata only
+- private peering can share authenticated `train.py` lineage plus checkpoint manifests
+- public-mode remote experiments are `observe-only`
+- private-mode authenticated experiments can participate in scheduling when they include a checkpoint
+- public-mode remote code, prompts, patches, models, and shell instructions are forbidden
+- private-mode code and checkpoint inheritance is a trust-scoped feature for known peers, not an open-public path
+- local moderation is authoritative; remote reputation is advisory only
+- `libp2p-experimental` exists for testing only and is not recommended for normal use
+
+The system assumes adversarial peers. Signatures prove identity, not honesty.
+
+See [docs/security.md](docs/security.md) and [docs/threat-model.md](docs/threat-model.md).
+
+## Dashboard And Observability
+
+The local dashboard runs on `http://127.0.0.1:4173` when the harness starts. Views include:
+
+- Swarm Stats
+- Leaderboard
+- Experiment Graph
+- Discoveries Feed
+- Trust / Moderation
+- Observability
+
+The Observability page is modeled after the Ernest-Agent style of local operations visibility: worker run history, live audit events, service health, and security-relevant activity all in one surface.
+
+## Testing
+
+The repo ships with unit, integration, security, and e2e suites:
 
 ```bash
-
-# 1. Install uv project manager (if you don't already have it)
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# 2. Install dependencies
-uv sync
-
-# 3. Download data and train tokenizer (one-time, ~2 min)
-uv run prepare.py
-
-# 4. Manually run a single training experiment (~5 min)
-uv run train.py
+npm test
+npm run test:full
+npm run test:unit
+npm run test:integration
+npm run test:security
+npm run test:e2e
+npm run build
+npm run check:core
+npm run check:docs
 ```
 
-If the above commands all work ok, your setup is working and you can go into autonomous research mode.
+Python worker unit tests are included in the default test run. See [docs/testing.md](docs/testing.md).
 
-## Running the agent
+## Quick Start
 
-Simply spin up your Claude/Codex or whatever you want in this repo (and disable all permissions), then you can prompt something like:
+```bash
+# 1. install node dependencies for the harness
+npm install
 
-```
-Hi have a look at program.md and let's kick off a new experiment! let's do the setup first.
-```
-
-The `program.md` file is essentially a super lightweight "skill".
-
-## Project structure
-
-```
-prepare.py      — constants, data prep + runtime utilities (do not modify)
-train.py        — model, optimizer, training loop (agent modifies this)
-program.md      — agent instructions
-pyproject.toml  — dependencies
+# 2. start the full local stack
+npm run start
 ```
 
-## Design choices
+This launches:
 
-- **Single file to modify.** The agent only touches `train.py`. This keeps the scope manageable and diffs reviewable.
-- **Fixed time budget.** Training always runs for exactly 5 minutes, regardless of your specific platform. This means you can expect approx 12 experiments/hour and approx 100 experiments while you sleep. There are two upsides of this design decision. First, this makes experiments directly comparable regardless of what the agent changes (model size, batch size, architecture, etc). Second, this means that autoresearch will find the most optimal model for your platform in that time budget. The downside is that your runs (and results) become not comparable to other people running on other compute platforms.
-- **Self-contained.** No external dependencies beyond PyTorch and a few small packages. No distributed training, no complex configs. One GPU, one file, one metric.
+- local API on `http://127.0.0.1:4172`
+- local React dashboard on `http://127.0.0.1:4173`
+- local worker loop
+- private peer sync by default when peers are configured
+- checkpoint inheritance and remote parent selection only in private swarm mode
+- public peering only if explicitly enabled
 
-## Platform support
+For a private swarm, set a shared token before starting:
 
-This code currently requires that you have a single NVIDIA GPU. In principle it is quite possible to support CPU, MPS and other platforms but this would also bloat the code. I'm not 100% sure that I want to take this on personally right now. People can reference (or have their agents reference) the full/parent nanochat repository that has wider platform support and shows the various solutions (e.g. a Flash Attention 3 kernels fallback implementation, generic device support, autodetection, etc.), feel free to create forks or discussions for other platforms and I'm happy to link to them here in the README in some new notable forks section or etc.
+```bash
+export SWARM_PRIVATE_NETWORK_TOKEN="replace-me"
+npm run start
+```
 
-Seeing as there seems to be a lot of interest in tinkering with autoresearch on much smaller compute platforms than an H100, a few extra words. If you're going to try running autoresearch on smaller computers (Macbooks etc.), I'd recommend one of the forks below. On top of this, here are some recommendations for how to tune the defaults for much smaller models for aspiring forks:
+Experimental libp2p mode is available only when explicitly unlocked:
 
-1. To get half-decent results I'd use a dataset with a lot less entropy, e.g. this [TinyStories dataset](https://huggingface.co/datasets/karpathy/tinystories-gpt4-clean). These are GPT-4 generated short stories. Because the data is a lot narrower in scope, you will see reasonable results with a lot smaller models (if you try to sample from them after training).
-2. You might experiment with decreasing `vocab_size`, e.g. from 8192 down to 4096, 2048, 1024, or even - simply byte-level tokenizer with 256 possibly bytes after utf-8 encoding.
-3. In `prepare.py`, you'll want to lower `MAX_SEQ_LEN` a lot, depending on the computer even down to 256 etc. As you lower `MAX_SEQ_LEN`, you may want to experiment with increasing `DEVICE_BATCH_SIZE` in `train.py` slightly to compensate. The number of tokens per fwd/bwd pass is the product of these two.
-4. Also in `prepare.py`, you'll want to decrease `EVAL_TOKENS` so that your validation loss is evaluated on a lot less data.
-5. In `train.py`, the primary single knob that controls model complexity is the `DEPTH` (default 8, here). A lot of variables are just functions of this, so e.g. lower it down to e.g. 4.
-6. You'll want to most likely use `WINDOW_PATTERN` of just "L", because "SSSL" uses alternating banded attention pattern that may be very inefficient for you. Try it.
-7. You'll want to lower `TOTAL_BATCH_SIZE` a lot, but keep it powers of 2, e.g. down to `2**14` (~16K) or so even, hard to tell.
+```bash
+export HARNESS_ALLOW_LIBP2P_EXPERIMENTAL=1
+```
 
-I think these would be the reasonable hyperparameters to play with. Ask your favorite coding agent for help and copy paste them this guide, as well as the full source code.
+Even with that flag set, it should be treated as unsupported and not recommended.
 
-## Notable forks
+For full setup, upstream core usage, and development workflows, see [QUICKSTART.md](QUICKSTART.md).
 
-- [miolini/autoresearch-macos](https://github.com/miolini/autoresearch-macos) (MacOS)
-- [trevin-creator/autoresearch-mlx](https://github.com/trevin-creator/autoresearch-mlx) (MacOS)
-- [jsegov/autoresearch-win-rtx](https://github.com/jsegov/autoresearch-win-rtx) (Windows)
+## Docs Index
 
-## License
+- [QUICKSTART.md](QUICKSTART.md) - install, run, private-default mode, peering options, and common commands
+- [docs/architecture.md](docs/architecture.md) - module boundaries, workspace model, control flow, and invariants
+- [docs/security.md](docs/security.md) - trust boundaries, admission control, moderation, and operational guidance
+- [docs/testing.md](docs/testing.md) - suite layout, commands, and CI expectations
+- [docs/api.md](docs/api.md) - local API endpoints and internal contracts
+- [docs/threat-model.md](docs/threat-model.md) - assets, adversaries, abuse cases, and mitigations
+- [docs/upstream-sync.md](docs/upstream-sync.md) - harness philosophy and upstream merge workflow
 
-MIT
+## Project Status
+
+Current implementation status:
+
+- additive harness packages around the upstream core
+- local API with SQLite persistence and signed metadata envelopes
+- Python worker with disposable workspace snapshots and checkpoint promotion
+- private-swarm checkpoint inheritance and remote parent selection
+- explicit peering enable/disable controls
+- local trust and moderation surface
+- React dashboard with observability page
+- unit, integration, security, and e2e coverage
+
+Not yet included:
+
+- recommended libp2p transport
+- public-mode executable lineage
+- blockchain/PoW admission costs
+- automatic network-wide enforcement
+
+## Contributing
+
+Contributions are expected to preserve the harness model:
+
+- keep upstream compatibility in mind
+- add tests with new functionality
+- update docs when interfaces or workflows change
+- do not route remote data into execution paths
+
+Start with the architecture and security docs before large changes.

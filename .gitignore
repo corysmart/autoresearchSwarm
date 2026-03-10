@@ -18,6 +18,11 @@ AGENTS.md
 
 # Experimental code/artifacts
 dev/
+node_modules/
+coverage/
+apps/ui/dist/
+harness-data/
+*.tsbuildinfo
 
 # Results file
 results.tsv

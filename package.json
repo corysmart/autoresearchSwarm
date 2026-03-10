@@ -1,0 +1,46 @@
+{
+  "name": "autoresearch-swarm-harness",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Security-first harness for the upstream autoresearch core",
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "start": "node --import tsx packages/orchestrator/src/main.ts",
+    "api:start": "node --import tsx packages/api/src/main.ts",
+    "worker:start": "python3 -m harness_worker.main",
+    "ui:dev": "vite --config apps/ui/vite.config.ts",
+    "build": "vite build --config apps/ui/vite.config.ts",
+    "test": "node --import tsx scripts/run-tests.ts all",
+    "test:full": "node --import tsx scripts/run-tests.ts all && node --import tsx scripts/run-tests.ts e2e",
+    "test:unit": "node --import tsx scripts/run-tests.ts unit",
+    "test:integration": "node --import tsx scripts/run-tests.ts integration",
+    "test:security": "node --import tsx scripts/run-tests.ts security",
+    "test:e2e": "node --import tsx scripts/run-tests.ts e2e",
+    "test:python": "node --import tsx scripts/run-tests.ts python",
+    "check:docs": "node --import tsx scripts/check-doc-links.ts",
+    "check:core": "node --import tsx scripts/check-core-contract.ts"
+  },
+  "dependencies": {
+    "@chainsafe/libp2p-gossipsub": "^14.1.2",
+    "@chainsafe/libp2p-noise": "^17.0.0",
+    "@chainsafe/libp2p-yamux": "^8.0.1",
+    "@libp2p/bootstrap": "^12.0.13",
+    "@libp2p/identify": "^4.0.12",
+    "@libp2p/tcp": "^11.0.12",
+    "libp2p": "^3.1.5",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.1.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vite": "^7.2.1"
+  }
+}

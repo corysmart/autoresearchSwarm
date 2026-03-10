@@ -1,0 +1,316 @@
+:root {
+  color-scheme: light;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  color: #183038;
+  background:
+    radial-gradient(circle at top left, rgba(245, 206, 111, 0.35), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(73, 173, 157, 0.28), transparent 30%),
+    linear-gradient(135deg, #f4efe2 0%, #d2e4df 100%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.shell {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  min-height: 100vh;
+}
+
+.sidebar {
+  backdrop-filter: blur(12px);
+  background: rgba(17, 44, 51, 0.86);
+  color: #f5efe2;
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.brand h1,
+.hero h2,
+.panel h3 {
+  margin: 0;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.72rem;
+  margin: 0 0 0.4rem;
+  color: #d9c58d;
+}
+
+.lede,
+.muted {
+  opacity: 0.85;
+}
+
+.nav {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.nav-item,
+.status-card button,
+.report-form button {
+  border: 0;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  color: inherit;
+  padding: 0.85rem 1rem;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 180ms ease, background 180ms ease;
+}
+
+.nav-item:hover,
+.status-card button:hover,
+.report-form button:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.nav-item.active {
+  background: linear-gradient(135deg, rgba(245, 206, 111, 0.25), rgba(73, 173, 157, 0.24));
+}
+
+.status-card {
+  margin-top: auto;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 18px;
+  padding: 1rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.button-stack {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.warning-button {
+  background: rgba(196, 98, 34, 0.22);
+}
+
+.warning-copy {
+  margin: 0;
+  color: #f1d8b6;
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+.content {
+  padding: 2rem;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  align-items: end;
+  animation: fade-up 350ms ease;
+}
+
+.hero-metrics,
+.panel-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.hero-metrics {
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+}
+
+.metric-card,
+.panel {
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(24, 48, 56, 0.12);
+  border-radius: 22px;
+  box-shadow: 0 20px 50px rgba(24, 48, 56, 0.08);
+}
+
+.metric-card {
+  padding: 1rem 1.1rem;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.metric-card strong {
+  font-size: 1.7rem;
+}
+
+.panel {
+  padding: 1.1rem 1.2rem;
+  animation: fade-up 420ms ease;
+}
+
+.panel-grid {
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.panel-header {
+  margin-bottom: 1rem;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 0.7rem 0.5rem;
+  border-bottom: 1px solid rgba(24, 48, 56, 0.08);
+  vertical-align: top;
+}
+
+.feed {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.feed li {
+  padding: 0.9rem 1rem;
+  border-radius: 16px;
+  background: rgba(24, 48, 56, 0.05);
+}
+
+.feed.compact li {
+  padding: 0.75rem 0.85rem;
+}
+
+.feed p,
+.feed span {
+  margin: 0.35rem 0 0;
+}
+
+.key-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+
+.key-grid div {
+  padding: 0.9rem;
+  border-radius: 16px;
+  background: rgba(24, 48, 56, 0.05);
+}
+
+.key-grid dt {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #46656d;
+}
+
+.key-grid dd {
+  margin: 0.35rem 0 0;
+  font-size: 1rem;
+}
+
+.report-form {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.report-form label {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.report-form input,
+.report-form textarea,
+.report-form select {
+  border-radius: 12px;
+  border: 1px solid rgba(24, 48, 56, 0.2);
+  padding: 0.75rem 0.85rem;
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.report-form textarea {
+  min-height: 6rem;
+  resize: vertical;
+}
+
+.graph {
+  width: 100%;
+  height: auto;
+  background: linear-gradient(180deg, rgba(24, 48, 56, 0.04), rgba(24, 48, 56, 0.01));
+  border-radius: 18px;
+}
+
+.graph line {
+  stroke: rgba(24, 48, 56, 0.24);
+  stroke-width: 2;
+}
+
+.graph circle {
+  fill: #0f5964;
+  stroke: #f4efe2;
+  stroke-width: 3;
+}
+
+.graph text {
+  fill: #f4efe2;
+  font-size: 0.58rem;
+  text-anchor: middle;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 960px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    margin: 1rem;
+    border-radius: 24px;
+  }
+
+  .content {
+    padding: 0 1rem 1rem;
+  }
+
+  .hero {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .hero-metrics {
+    grid-template-columns: repeat(2, minmax(120px, 1fr));
+  }
+}

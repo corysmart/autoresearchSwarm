@@ -83,9 +83,12 @@ export async function fetchObservability(): Promise<{
 }
 
 export async function togglePeering(mode: "enable" | "disable" | "private" | "libp2p-experimental"): Promise<void> {
-  await fetch(`/api/local/peering/${mode}`, {
+  const response = await fetch(`/api/local/peering/${mode}`, {
     method: "POST"
   });
+  if (!response.ok) {
+    throw new Error(`Failed to change networking mode: ${mode}`);
+  }
 }
 
 export async function submitReport(payload: {

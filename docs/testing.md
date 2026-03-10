@@ -10,6 +10,7 @@ npm run test:integration
 npm run test:security
 npm run test:e2e
 npm run test:python
+npm run test:coverage:ui
 npm run build
 npm run check:core
 npm run check:docs
@@ -35,13 +36,27 @@ The harness is expected to keep all four layers covered:
 - private-swarm inheritance path
 - dashboard rendering behavior
 
-Coverage is enforced socially through required suites and CI gates rather than a numeric threshold in the current implementation.
+The repo does not yet enforce a 90% whole-repo threshold.
+
+It does enforce a targeted numeric gate for the UI control surface that has been the source of recent regressions:
+
+- `apps/ui/src/api.ts`
+- `apps/ui/src/dashboard-view.tsx`
+
+Those files must maintain at least 90% line coverage through:
+
+```bash
+npm run test:coverage:ui
+```
+
+This is a focused gate, not a substitute for broader suite coverage across the rest of the harness.
 
 ## CI Expectations
 
 CI should run:
 
 - `npm test`
+- `npm run test:coverage:ui`
 - `npm run test:e2e`
 - `npm run build`
 - `npm run check:core`

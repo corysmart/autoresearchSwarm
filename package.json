@@ -13,6 +13,7 @@
     "worker:start": "python3 -m harness_worker.main",
     "ui:dev": "vite --config apps/ui/vite.config.ts",
     "build": "vite build --config apps/ui/vite.config.ts",
+    "docs:screenshots": "node --import tsx scripts/capture-readme-screenshots.ts",
     "test": "node --import tsx scripts/run-tests.ts all",
     "test:full": "node --import tsx scripts/run-tests.ts all && node --import tsx scripts/run-tests.ts e2e",
     "test:unit": "node --import tsx scripts/run-tests.ts unit",
@@ -20,6 +21,7 @@
     "test:security": "node --import tsx scripts/run-tests.ts security",
     "test:e2e": "node --import tsx scripts/run-tests.ts e2e",
     "test:python": "node --import tsx scripts/run-tests.ts python",
+    "test:coverage:ui": "node --import tsx scripts/check-ui-coverage.ts",
     "check:docs": "node --import tsx scripts/check-doc-links.ts",
     "check:core": "node --import tsx scripts/check-core-contract.ts"
   },

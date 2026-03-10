@@ -28,6 +28,9 @@ jobs:
       - name: Test suites
         run: npm test
 
+      - name: UI coverage gate
+        run: npm run test:coverage:ui
+
       - name: End-to-end suite
         run: npm run test:e2e
 

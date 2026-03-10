@@ -125,6 +125,28 @@ The local dashboard runs on `http://127.0.0.1:4173` when the harness starts. Vie
 
 The Observability page is modeled after the Ernest-Agent style of local operations visibility: worker run history, live audit events, service health, and security-relevant activity all in one surface.
 
+## Dashboard Screenshots
+
+The README screenshots below are generated from a live local node in `simulated` mode:
+
+```bash
+npm run docs:screenshots
+```
+
+That script starts the orchestrator, waits for experiment data to appear, captures the dashboard with headless Chrome, and writes the images into `docs/screenshots/`.
+
+### Swarm Stats
+
+![Swarm Stats dashboard](docs/screenshots/swarm-stats.png)
+
+### Leaderboard
+
+![Leaderboard dashboard](docs/screenshots/swarm-leaderboard.png)
+
+### Observability
+
+![Observability dashboard](docs/screenshots/swarm-observability.png)
+
 ## Testing
 
 The repo ships with unit, integration, security, and e2e suites:
@@ -136,12 +158,13 @@ npm run test:unit
 npm run test:integration
 npm run test:security
 npm run test:e2e
+npm run test:coverage:ui
 npm run build
 npm run check:core
 npm run check:docs
 ```
 
-Python worker unit tests are included in the default test run. See [docs/testing.md](docs/testing.md).
+Python worker unit tests are included in the default test run. The UI control surface also has a hard 90% line-coverage gate for `apps/ui/src/api.ts` and `apps/ui/src/dashboard-view.tsx`. See [docs/testing.md](docs/testing.md).
 
 ## Quick Start
 

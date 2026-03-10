@@ -79,6 +79,8 @@ export async function fetchObservability(): Promise<{
     peerCount: number;
     agentBackend: string;
     platformCore: string;
+    ernestAgentUrl: string | null;
+    ernestAgentUiEnabled: boolean;
   };
 }> {
   const [events, runs, health] = await Promise.all([
@@ -91,6 +93,8 @@ export async function fetchObservability(): Promise<{
       peerCount: number;
       agentBackend: string;
       platformCore: string;
+      ernestAgentUrl: string | null;
+      ernestAgentUiEnabled: boolean;
     }>("/api/observability/health")
   ]);
   return { events: events.items, runs: runs.items, health };

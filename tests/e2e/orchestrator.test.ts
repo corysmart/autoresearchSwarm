@@ -15,7 +15,10 @@ test("orchestrator starts private-peered harness with API and UI surfaces", asyn
       HARNESS_API_PORT: String(apiPort),
       HARNESS_UI_PORT: String(uiPort),
       HARNESS_WORKER_POLL_SECONDS: "1",
-      HARNESS_EXECUTION_MODE: "simulated"
+      HARNESS_EXECUTION_MODE: "simulated",
+      HARNESS_AGENT_BACKEND: "heuristic",
+      HARNESS_ERNEST_AGENT_AUTO_START: "0",
+      HARNESS_ERNEST_AGENT_AUTO_BUILD: "0"
     }
   });
 

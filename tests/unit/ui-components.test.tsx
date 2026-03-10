@@ -116,7 +116,9 @@ test("DashboardView renders non-stats panels when selected", () => {
           runtimeMode: "private-peered",
           peerCount: 0,
           agentBackend: "auto",
-          platformCore: "default"
+          platformCore: "default",
+          ernestAgentUrl: null,
+          ernestAgentUiEnabled: false
         }
       }}
       disabledCount={0}
@@ -187,7 +189,9 @@ test("DashboardView renders leaderboard, discoveries, and trust branches", () =>
       runtimeMode: "private-peered",
       peerCount: 0,
       agentBackend: "auto",
-      platformCore: "default"
+      platformCore: "default",
+      ernestAgentUrl: null,
+      ernestAgentUiEnabled: false
     }
   };
 
@@ -258,4 +262,51 @@ test("DashboardView renders leaderboard, discoveries, and trust branches", () =>
   assert.match(discoveriesHtml, /Found/);
   assert.match(trustHtml, /Local Moderation/);
   assert.match(trustHtml, /peer-a/);
+});
+
+test("DashboardView embeds Ernest-Agent UI when enabled", () => {
+  const html = renderToStaticMarkup(
+    <DashboardView
+      view="ernest"
+      state={{
+        stats: null,
+        leaderboard: [],
+        graph: { nodes: [], edges: [] },
+        discoveries: [],
+        peers: [],
+        trust: [],
+        reports: [],
+        auditEvents: [],
+        workerRuns: [],
+        health: {
+          api: "healthy",
+          workerPollSeconds: 1,
+          runtimeMode: "private-peered",
+          peerCount: 0,
+          agentBackend: "ernest-agent",
+          platformCore: "default",
+          ernestAgentUrl: "http://127.0.0.1:4310",
+          ernestAgentUiEnabled: true
+        }
+      }}
+      disabledCount={0}
+      networkBusyMode={null}
+      networkError={null}
+      onSelectView={() => undefined}
+      onTogglePeering={() => undefined}
+      reportTarget=""
+      reportReason=""
+      reportRating="-1"
+      reportType="reputation"
+      onReportTargetChange={() => undefined}
+      onReportReasonChange={() => undefined}
+      onReportRatingChange={() => undefined}
+      onReportTypeChange={() => undefined}
+      onReportSubmit={() => undefined}
+    />
+  );
+
+  assert.match(html, /Embedded Ernest-Agent UI/);
+  assert.match(html, /iframe/);
+  assert.match(html, /http:\/\/127\.0\.0\.1:4310\/ui/);
 });

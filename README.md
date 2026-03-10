@@ -116,6 +116,13 @@ Agent backend:
 
 These are local-only mutation backends. Peer data never decides which prompt, command, or agent backend runs.
 
+When Ernest-Agent is the selected backend, the orchestrator will:
+
+- build the Ernest server bundle
+- build the Ernest observability UI bundle
+- start Ernest locally
+- expose an embedded Ernest-Agent page inside the harness dashboard
+
 ## Security Philosophy
 
 Security is the first design constraint, not a bolt-on:
@@ -146,8 +153,10 @@ The local dashboard runs on `http://127.0.0.1:4173` when the harness starts. Vie
 - Discoveries Feed
 - Trust / Moderation
 - Observability
+- Ernest Agent
 
 The Observability page is modeled after the Ernest-Agent style of local operations visibility: worker run history, live audit events, service health, and security-relevant activity all in one surface.
+When Ernest-Agent is enabled, the dashboard also embeds the Ernest observability UI directly from the local Ernest server.
 
 ## Dashboard Screenshots
 

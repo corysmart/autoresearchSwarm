@@ -41,6 +41,8 @@ export function createTestHarness(overrides: Partial<HarnessConfig> = {}): TestH
     ernestAgentUrl: "http://127.0.0.1:4310",
     ernestAgentRoot: join(rootDir, "ernest-agent"),
     ernestAgentAutoStart: false,
+    ernestAgentAutoBuild: false,
+    ernestAgentUiEnabled: false,
     ernestAgentPort: 4310,
     ...overrides
   };

@@ -70,6 +70,8 @@ Returns process-level health summary for the observability page, including:
 - known peer count
 - configured agent backend
 - configured platform core
+- Ernest-Agent base URL
+- whether the embedded Ernest UI is enabled
 
 ### `GET /api/events`
 

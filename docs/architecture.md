@@ -74,3 +74,4 @@ Observability is part of the architecture, not a separate debug layer:
 - health, trust, and swarm state are all queryable through the API
 
 This is intentionally similar to the Ernest-Agent operating model: the local operator should have a single page that explains what the system is doing and why.
+When Ernest-Agent is configured as the mutation backend, the harness dashboard also embeds Ernest's own local observability UI instead of forcing a separate manual startup workflow.

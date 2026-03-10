@@ -154,7 +154,9 @@ export function createApiServer(state: ApiState): Server {
           runtimeMode: state.swarm.runtimeMode(),
           peerCount: state.db.listPeers().length,
           agentBackend: state.config.agentBackend,
-          platformCore: state.config.platformCore
+          platformCore: state.config.platformCore,
+          ernestAgentUrl: state.config.ernestAgentUrl,
+          ernestAgentUiEnabled: state.config.ernestAgentUiEnabled
         });
         return;
       }

@@ -27,6 +27,21 @@ function spawnChild(command: string, args: string[], extraEnv: NodeJS.ProcessEnv
   });
 }
 
+async function runCheckedAndWait(command: string, args: string[], cwd: string, label: string): Promise<void> {
+  const child = spawn(command, args, {
+    cwd,
+    stdio: "inherit",
+    env: process.env
+  });
+  const exitCode = await new Promise<number>((resolvePromise, rejectPromise) => {
+    child.on("error", rejectPromise);
+    child.on("exit", (code) => resolvePromise(code ?? 1));
+  });
+  if (exitCode !== 0) {
+    throw new Error(`${label} failed with exit code ${exitCode}`);
+  }
+}
+
 async function waitFor(url: string, timeoutMs: number): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
@@ -47,9 +62,21 @@ async function main(): Promise<void> {
   const processes: ChildProcess[] = [];
   if (config.agentBackend === "ernest-agent" && config.ernestAgentAutoStart) {
     const ernestServerEntry = resolve(config.ernestAgentRoot, "dist/server/server.js");
-    if (!existsSync(ernestServerEntry)) {
+    const ernestUiEntry = resolve(config.ernestAgentRoot, "ui/dist/index.html");
+    const ernestNodeModules = resolve(config.ernestAgentRoot, "node_modules");
+    if (!existsSync(ernestNodeModules)) {
       throw new Error(
-        `Ernest-Agent backend requested but ${ernestServerEntry} is missing. Build Ernest Agent first or set HARNESS_ERNEST_AGENT_AUTO_START=0.`
+        `Ernest-Agent backend requested but ${ernestNodeModules} is missing. Run npm install in ${config.ernestAgentRoot} first.`
+      );
+    }
+    if (config.ernestAgentAutoBuild || !existsSync(ernestServerEntry) || !existsSync(ernestUiEntry)) {
+      await runCheckedAndWait("npm", ["run", "build"], config.ernestAgentRoot, "Ernest-Agent server build");
+      if (config.ernestAgentUiEnabled) {
+        await runCheckedAndWait("npm", ["run", "ui:build"], config.ernestAgentRoot, "Ernest-Agent UI build");
+      }
+    } else if (!existsSync(ernestServerEntry)) {
+      throw new Error(
+        `Ernest-Agent backend requested but ${ernestServerEntry} is missing. Build Ernest Agent first or set HARNESS_ERNEST_AGENT_AUTO_BUILD=1.`
       );
     }
     const ernest = spawn(process.execPath, [ernestServerEntry], {
@@ -58,7 +85,9 @@ async function main(): Promise<void> {
       env: {
         ...process.env,
         PORT: String(config.ernestAgentPort),
-        OBS_UI_ENABLED: "false",
+        OBS_UI_ENABLED: config.ernestAgentUiEnabled ? "true" : "false",
+        OBS_UI_SKIP_AUTH: "true",
+        OBS_UI_BIND_LOCALHOST: "true",
         HEARTBEAT_ENABLED: "false",
         FILE_WORKSPACE_ROOT: config.worktreeDir,
         OPENCLAW_WORKSPACE_ROOT: config.worktreeDir,

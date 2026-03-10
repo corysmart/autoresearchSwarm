@@ -197,6 +197,12 @@ That works out of the box in this repo because `.env.local.default` already sets
 - `HARNESS_ERNEST_AGENT_ROOT=../Ernest Agent`
 
 The orchestrator auto-starts Ernest-Agent on a local port, scopes its file workspace root to `worktrees/`, and the worker sends mutation requests over `POST /agent/run-once`.
+It also builds both:
+
+- Ernest server bundle via `npm run build`
+- Ernest UI bundle via `npm run ui:build`
+
+before launching the Ernest server, unless you explicitly disable that with `HARNESS_ERNEST_AGENT_AUTO_BUILD=0`.
 
 ## Useful Endpoints
 
@@ -211,6 +217,12 @@ The orchestrator auto-starts Ernest-Agent on a local port, scopes its file works
 - `GET /api/observability/health`
 - `GET /api/artifacts/checkpoints/:hash` for private-swarm checkpoint fetches
 - `GET /api/events` for SSE
+
+When Ernest-Agent is enabled, its own local UI is also available at:
+
+- `${HARNESS_ERNEST_AGENT_URL}/ui`
+
+and embedded in the harness dashboard under the `Ernest Agent` view.
 
 ## Two-Node Private Swarm Test
 

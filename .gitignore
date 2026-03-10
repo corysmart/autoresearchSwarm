@@ -23,6 +23,7 @@ coverage/
 apps/ui/dist/
 harness-data/
 .env.local
+platform_cores/*/uv.lock
 *.tsbuildinfo
 
 # Results file

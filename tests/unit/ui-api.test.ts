@@ -57,7 +57,9 @@ test("UI API helpers map successful JSON responses", async () => {
           runtimeMode: "private-peered",
           peerCount: 0,
           agentBackend: "auto",
-          platformCore: "default"
+          platformCore: "default",
+          ernestAgentUrl: "http://127.0.0.1:4310",
+          ernestAgentUiEnabled: true
         },
         "/api/local/trust/report": { ok: true },
         "/api/local/peering/private": { ok: true }

@@ -9,7 +9,7 @@ import type {
 } from "../../../packages/contracts/src/index.ts";
 import type { AuditEventView, PeerView, WorkerRunView } from "./api.ts";
 
-export type ViewKey = "stats" | "leaderboard" | "graph" | "discoveries" | "trust" | "observability";
+export type ViewKey = "stats" | "leaderboard" | "graph" | "discoveries" | "trust" | "observability" | "ernest";
 export type NetworkActionMode = "enable" | "disable" | "private" | "libp2p-experimental";
 
 export interface DashboardState {
@@ -29,6 +29,8 @@ export interface DashboardState {
     peerCount: number;
     agentBackend: string;
     platformCore: string;
+    ernestAgentUrl: string | null;
+    ernestAgentUiEnabled: boolean;
   } | null;
 }
 
@@ -38,7 +40,7 @@ interface NetworkAction {
   tone?: "default" | "warning";
 }
 
-const navItems: Array<{ key: ViewKey; label: string }> = [
+const baseNavItems: Array<{ key: Exclude<ViewKey, "ernest">; label: string }> = [
   { key: "stats", label: "Swarm Stats" },
   { key: "leaderboard", label: "Leaderboard" },
   { key: "graph", label: "Experiment Graph" },
@@ -177,6 +179,9 @@ export function DashboardView({
   onReportTypeChange: (value: "security" | "reputation") => void;
   onReportSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }): ReactElement {
+  const navItems = state.health?.agentBackend === "ernest-agent" && state.health?.ernestAgentUiEnabled
+    ? [...baseNavItems, { key: "ernest" as const, label: "Ernest Agent" }]
+    : baseNavItems;
   return (
     <div className="shell">
       <aside className="sidebar">
@@ -336,6 +341,7 @@ export function DashboardView({
                 <div><dt>Mode</dt><dd>{state.health?.runtimeMode ?? "private-peered"}</dd></div>
                 <div><dt>Agent backend</dt><dd>{state.health?.agentBackend ?? "auto"}</dd></div>
                 <div><dt>Platform core</dt><dd>{state.health?.platformCore ?? "auto"}</dd></div>
+                <div><dt>Ernest UI</dt><dd>{state.health?.ernestAgentUiEnabled ? "enabled" : "disabled"}</dd></div>
                 <div><dt>Known peers</dt><dd>{state.health?.peerCount ?? 0}</dd></div>
               </dl>
             </Panel>
@@ -362,6 +368,35 @@ export function DashboardView({
               </ul>
             </Panel>
           </section>
+        )}
+
+        {view === "ernest" && (
+          <Panel title="Embedded Ernest-Agent UI">
+            {state.health?.ernestAgentUrl && state.health?.ernestAgentUiEnabled ? (
+              <div className="embed-panel">
+                <p className="muted">
+                  Ernest-Agent is running locally at {state.health.ernestAgentUrl}/ui.
+                </p>
+                <p className="muted">
+                  If the embedded frame does not load, open it directly in a new tab.
+                </p>
+                <p>
+                  <a href={`${state.health.ernestAgentUrl}/ui`} target="_blank" rel="noreferrer">
+                    Open Ernest-Agent UI
+                  </a>
+                </p>
+                <iframe
+                  className="ernest-frame"
+                  src={`${state.health.ernestAgentUrl}/ui`}
+                  title="Ernest-Agent UI"
+                />
+              </div>
+            ) : (
+              <p className="muted">
+                Ernest-Agent UI is not enabled for the current node configuration.
+              </p>
+            )}
+          </Panel>
         )}
       </main>
     </div>

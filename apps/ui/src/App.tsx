@@ -27,7 +27,8 @@ function readInitialView(): ViewKey {
     rawView === "graph" ||
     rawView === "discoveries" ||
     rawView === "trust" ||
-    rawView === "observability"
+    rawView === "observability" ||
+    rawView === "ernest"
     ? rawView
     : "stats";
 }

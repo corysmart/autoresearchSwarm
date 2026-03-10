@@ -71,3 +71,5 @@ That combination catches:
 - upstream core contract breaks
 - checkpoint lineage regressions
 - documentation drift
+
+The default repo config now prefers Ernest-Agent, but automated tests and README screenshot generation explicitly pin `HARNESS_AGENT_BACKEND=heuristic` so they remain hermetic and do not depend on the sibling Ernest checkout.

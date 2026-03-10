@@ -29,6 +29,8 @@ export interface HarnessConfig {
   ernestAgentUrl: string | null;
   ernestAgentRoot: string;
   ernestAgentAutoStart: boolean;
+  ernestAgentAutoBuild: boolean;
+  ernestAgentUiEnabled: boolean;
   ernestAgentPort: number;
 }
 
@@ -106,6 +108,12 @@ export function loadHarnessConfig(rootDir: string = process.cwd()): HarnessConfi
     ernestAgentAutoStart:
       process.env.HARNESS_ERNEST_AGENT_AUTO_START === "1" ||
       (process.env.HARNESS_ERNEST_AGENT_AUTO_START !== "0" && agentBackend === "ernest-agent"),
+    ernestAgentAutoBuild:
+      process.env.HARNESS_ERNEST_AGENT_AUTO_BUILD === "1" ||
+      (process.env.HARNESS_ERNEST_AGENT_AUTO_BUILD !== "0" && agentBackend === "ernest-agent"),
+    ernestAgentUiEnabled:
+      process.env.HARNESS_ERNEST_AGENT_UI_ENABLED === "1" ||
+      process.env.HARNESS_ERNEST_AGENT_UI_ENABLED !== "0",
     ernestAgentPort,
   };
 }

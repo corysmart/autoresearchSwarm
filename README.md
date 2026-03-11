@@ -267,7 +267,7 @@ Practical meaning:
 - `.env.local` is gitignored and is for machine-specific overrides
 - shell exports still win when you need one-off runs
 
-The committed repo default backend is `auto`. This workspace opts into Ernest-Agent locally through [.env.local](/Users/cory/Documents/autoresearchSwarm/.env.local), which is gitignored and machine-specific by design.
+The committed repo default backend is `auto`. This workspace opts into Ernest-Agent locally through `.env.local`, which is gitignored and machine-specific by design.
 
 Experimental libp2p mode is available only when explicitly unlocked:
 

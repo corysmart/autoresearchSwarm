@@ -9,10 +9,15 @@ function markdownFiles(root: string): string[] {
 }
 
 const markdownLink = /\[[^\]]+\]\(([^)]+)\)/g;
+const conflictMarker = /^(<<<<<<<|=======|>>>>>>>)( .*)?$/m;
 let failures = 0;
 
 for (const file of markdownFiles(process.cwd())) {
   const content = readFileSync(file, "utf8");
+  if (conflictMarker.test(content)) {
+    console.error(`Conflict marker found in ${file}`);
+    failures += 1;
+  }
   for (const match of content.matchAll(markdownLink)) {
     const target = match[1];
     if (target.startsWith("http") || target.startsWith("#")) {

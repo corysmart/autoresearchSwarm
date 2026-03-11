@@ -11,7 +11,6 @@ The goal is to turn each node into the same full-stack participant:
 - local dashboard host
 - local trust authority
 
-<<<<<<< HEAD
 Every node should be able to run autonomously, observe the swarm, and stay safe even when peers are malicious.
 
 ## The Problem This Project Addresses
@@ -95,6 +94,11 @@ Key harness rules:
 - isolate all swarm/API/UI/security logic in additive directories
 
 That makes upstream syncs a maintenance workflow, not a rewrite project. See [docs/upstream-sync.md](docs/upstream-sync.md).
+
+## Credit
+
+This project builds directly on [Andrej Karpathy's `autoresearch`](https://github.com/karpathy/autoresearch).
+The upstream trainer, workflow, and research loop are Karpathy's work; this repo layers a harness around that core for orchestration, swarm coordination, observability, and safer multi-node operation while keeping the root core syncable with upstream.
 
 ## Platform Core And Agent Backends
 

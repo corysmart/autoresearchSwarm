@@ -188,16 +188,25 @@ HARNESS_AGENT_BACKEND=codex npm run start
 Ernest-Agent example:
 
 ```bash
+cat >> .env.local <<'EOF'
+HARNESS_AGENT_BACKEND=ernest-agent
+HARNESS_ERNEST_AGENT_ROOT=../Ernest Agent
+HARNESS_ERNEST_AGENT_AUTO_START=1
+HARNESS_ERNEST_AGENT_AUTO_BUILD=1
+HARNESS_ERNEST_AGENT_PORT=4310
+HARNESS_ERNEST_AGENT_URL=http://127.0.0.1:4310
+HARNESS_ERNEST_AGENT_UI_ENABLED=1
+EOF
+
 npm run start
 ```
 
-That works out of the box in this repo because `.env.local.default` already sets:
+That keeps Ernest-Agent as a local opt-in instead of a committed repo default. With those overrides in place, the orchestrator:
 
-- `HARNESS_AGENT_BACKEND=ernest-agent`
-- `HARNESS_ERNEST_AGENT_ROOT=../Ernest Agent`
-
-The orchestrator auto-starts Ernest-Agent on a local port, scopes its file workspace root to `worktrees/`, and the worker sends mutation requests over `POST /agent/run-once`.
-It also builds both:
+- auto-starts Ernest-Agent on a local port
+- scopes its file workspace root to `worktrees/`
+- sends worker mutation requests over `POST /agent/run-once`
+- builds both:
 
 - Ernest server bundle via `npm run build`
 - Ernest UI bundle via `npm run ui:build`

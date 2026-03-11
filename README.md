@@ -240,6 +240,7 @@ npm run start
 To run node mutations through Ernest-Agent instead of the built-in worker mutator:
 
 ```bash
+# put these in .env.local for a persistent local override
 export HARNESS_AGENT_BACKEND=ernest-agent
 export HARNESS_ERNEST_AGENT_ROOT="../Ernest Agent"
 npm run start
@@ -266,7 +267,7 @@ Practical meaning:
 - `.env.local` is gitignored and is for machine-specific overrides
 - shell exports still win when you need one-off runs
 
-The current repo default backend is Ernest-Agent via [.env.local.default](/Users/cory/Documents/autoresearchSwarm/.env.local.default), pointing at the sibling Ernest workspace by default.
+The committed repo default backend is `auto`. This workspace opts into Ernest-Agent locally through [.env.local](/Users/cory/Documents/autoresearchSwarm/.env.local), which is gitignored and machine-specific by design.
 
 Experimental libp2p mode is available only when explicitly unlocked:
 

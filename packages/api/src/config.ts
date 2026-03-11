@@ -103,7 +103,9 @@ export function loadHarnessConfig(rootDir: string = process.cwd()): HarnessConfi
     workerPollSeconds: parseNumber(process.env.HARNESS_WORKER_POLL_SECONDS, 10),
     agentBackend,
     platformCore,
-    ernestAgentUrl: process.env.HARNESS_ERNEST_AGENT_URL ?? `http://${apiHost}:${ernestAgentPort}`,
+    ernestAgentUrl:
+      process.env.HARNESS_ERNEST_AGENT_URL ??
+      (agentBackend === "ernest-agent" ? `http://${apiHost}:${ernestAgentPort}` : null),
     ernestAgentRoot: resolve(rootDir, process.env.HARNESS_ERNEST_AGENT_ROOT ?? "../Ernest Agent"),
     ernestAgentAutoStart:
       process.env.HARNESS_ERNEST_AGENT_AUTO_START === "1" ||
@@ -113,7 +115,7 @@ export function loadHarnessConfig(rootDir: string = process.cwd()): HarnessConfi
       (process.env.HARNESS_ERNEST_AGENT_AUTO_BUILD !== "0" && agentBackend === "ernest-agent"),
     ernestAgentUiEnabled:
       process.env.HARNESS_ERNEST_AGENT_UI_ENABLED === "1" ||
-      process.env.HARNESS_ERNEST_AGENT_UI_ENABLED !== "0",
+      (process.env.HARNESS_ERNEST_AGENT_UI_ENABLED !== "0" && agentBackend === "ernest-agent"),
     ernestAgentPort,
   };
 }

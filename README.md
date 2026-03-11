@@ -11,6 +11,7 @@ The goal is to turn each node into the same full-stack participant:
 - local dashboard host
 - local trust authority
 
+<<<<<<< HEAD
 Every node should be able to run autonomously, observe the swarm, and stay safe even when peers are malicious.
 
 ## The Problem This Project Addresses
